@@ -217,6 +217,14 @@
             cursor: pointer;
         }
 
+        button.btn-success {
+            background: var(--accent-green);
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
         button.btn-danger {
             background: var(--accent-red);
             color: white;
@@ -362,7 +370,7 @@
         </div>
     </header>
 
-    <!-- 主頁面內容區 -->
+    <!-- 主要內容區 -->
     <main>
         <!-- 1. 任務與冒險頁面 -->
         <section id="tab-quests" class="tab-content active">
@@ -422,9 +430,7 @@
             </div>
 
             <div class="card">
-                <div class="card-title">
-                    <span>📈 月份健康走勢</span>
-                </div>
+                <div class="card-title">📈 月份健康走勢</div>
                 <div class="month-selector">
                     <label>查看月份：</label>
                     <input type="month" id="weight-month-picker" onchange="renderWeightTab()">
@@ -519,6 +525,15 @@
                 <button class="btn-primary" onclick="updateName()">儲存名字</button>
             </div>
 
+            <div class="card">
+                <div class="card-title">💾 資料備份與匯入</div>
+                <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 10px;">將所有紀錄匯出備份檔案，或將備份檔匯入以還原/同步資料。</p>
+                <button class="btn-success" onclick="exportData()" style="margin-bottom: 8px;">📤 匯出備份檔案 (.json)</button>
+                
+                <label style="font-size:12px; color:var(--text-sub); display:block; margin-top:6px; margin-bottom:4px;">選擇備份檔匯入：</label>
+                <input type="file" id="import-file-input" accept=".json" onchange="importData(event)">
+            </div>
+
             <div class="card" style="border-color: rgba(239, 68, 68, 0.4);">
                 <div class="card-title" style="color: var(--accent-red);">⚠️ 重置資料</div>
                 <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 12px;">重置後將清空所有等級、經驗值、任務紀錄、體重與財務數據，且無法復原。</p>
@@ -553,7 +568,6 @@
     </nav>
 
     <script>
-        // 預設資料：屬性初始值為 0，空白任務清單
         const defaultData = {
             name: "冒險者",
             level: 1,
@@ -997,6 +1011,7 @@
             }
         }
 
+        // 設定：修改名字
         function updateName() {
             const newName = document.getElementById('setting-name-input').value.trim();
             if (!newName) return alert('請輸入有效的名稱！');
@@ -1006,6 +1021,47 @@
             alert('👤 稱號修改成功！');
         }
 
+        // 📤 匯出資料為 JSON 檔案
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(gameData, null, 2));
+            const downloadAnchor = document.createElement('a');
+            const fileName = `GamifiedLife_Backup_${new Date().toISOString().split('T')[0]}.json`;
+            
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", fileName);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        // 📥 匯入 JSON 檔案並覆蓋資料
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (imported && imported.level !== undefined && imported.attributes !== undefined) {
+                        gameData = imported;
+                        saveData();
+                        updateUI();
+                        renderWeightTab();
+                        renderReadingTab();
+                        renderFinanceTab();
+                        alert('📥 備份資料已成功匯入並同步！');
+                    } else {
+                        alert('❌ 檔案格式不符合，請確認是否為正確的備份檔！');
+                    }
+                } catch (err) {
+                    alert('❌ 讀取檔案失敗，請檢查檔案格式。');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // 設定：重置資料
         function resetAllData() {
             if (confirm('⚠️ 確定要重置所有資料嗎？這將會清空等級、任務、體重、閱讀與財務紀錄！')) {
                 gameData = JSON.parse(JSON.stringify(defaultData));
