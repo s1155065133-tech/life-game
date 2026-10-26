@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>人生遊戲化 Gamified Life</title>
 
-    <!-- 📱 iOS 標準 Apple Touch Icon (標準高畫質 PNG) -->
+    <!-- 📱 iOS 標準 Apple Touch Icon -->
     <link rel="apple-touch-icon" sizes="180x180" href="https://img.icons8.com/color/512/crossed-swords.png">
     <link rel="icon" type="image/png" href="https://img.icons8.com/color/512/crossed-swords.png">
 
@@ -37,7 +37,7 @@
         body {
             background-color: var(--bg-color);
             color: var(--text-main);
-            padding-bottom: 70px;
+            padding-bottom: 75px;
             max-width: 600px;
             margin: 0 auto;
             min-height: 100vh;
@@ -129,7 +129,7 @@
             border-radius: 10px;
         }
 
-        /* 導覽列 */
+        /* 底部導覽列 */
         nav {
             position: fixed;
             bottom: 0;
@@ -140,7 +140,7 @@
             background: var(--card-bg);
             display: flex;
             justify-content: space-around;
-            padding: 10px 0;
+            padding: 8px 0;
             border-top: 1px solid var(--card-border);
             z-index: 100;
         }
@@ -150,11 +150,11 @@
             flex-direction: column;
             align-items: center;
             color: var(--text-sub);
-            font-size: 11px;
+            font-size: 10px;
             background: none;
             border: none;
             cursor: pointer;
-            width: 16%;
+            width: 14%;
         }
 
         .nav-item.active {
@@ -225,7 +225,20 @@
             cursor: pointer;
         }
 
-        /* 任務列表 */
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 12px;
+            width: auto;
+            margin: 0 2px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-edit { background: var(--accent-gold); color: #000; }
+        .btn-delete { background: var(--accent-red); color: #fff; }
+
+        /* 列表樣式 */
         .quest-item {
             display: flex;
             align-items: center;
@@ -267,11 +280,7 @@
             margin: 0;
         }
 
-        /* 屬性清單 */
-        .attr-item {
-            margin-bottom: 12px;
-        }
-
+        .attr-item { margin-bottom: 12px; }
         .attr-header {
             display: flex;
             justify-content: space-between;
@@ -279,7 +288,6 @@
             margin-bottom: 4px;
         }
 
-        /* 歷史與圖表 */
         .chart-container {
             position: relative;
             height: 220px;
@@ -288,11 +296,12 @@
         }
 
         .history-list-item {
-            padding: 8px 0;
+            padding: 10px 0;
             border-bottom: 1px solid var(--card-border);
             font-size: 13px;
             display: flex;
             justify-content: space-between;
+            align-items: center;
         }
 
         .finance-summary {
@@ -313,6 +322,19 @@
             font-size: 16px;
             font-weight: bold;
             margin-top: 4px;
+        }
+
+        .month-selector {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .month-selector label {
+            font-size: 13px;
+            color: var(--text-sub);
+            white-space: nowrap;
         }
     </style>
 </head>
@@ -345,14 +367,14 @@
         <!-- 1. 任務與冒險頁面 -->
         <section id="tab-quests" class="tab-content active">
             <div class="card">
-                <div class="card-title">➕ 發布新任務</div>
+                <div class="card-title"><span id="quest-form-title">➕ 發布新任務</span></div>
                 <input type="text" id="quest-title" placeholder="任務名稱 (例: 練習桌遊設計30分鐘)">
                 <div style="display: flex; gap: 8px;">
                     <select id="quest-attr"></select>
                     <input type="number" id="quest-exp" placeholder="EXP (預設20)" value="20">
                     <input type="number" id="quest-gold" placeholder="金幣 (預設10)" value="10">
                 </div>
-                <button class="btn-primary" onclick="addQuest()">新增任務</button>
+                <button class="btn-primary" id="btn-save-quest" onclick="addOrUpdateQuest()">新增任務</button>
             </div>
 
             <div class="card">
@@ -364,18 +386,16 @@
         <!-- 2. 個人屬性與能力矩陣 -->
         <section id="tab-stats" class="tab-content">
             <div class="card">
-                <div class="card-title">
-                    ✨ 自訂能力矩陣
-                </div>
+                <div class="card-title">✨ 自訂能力矩陣</div>
                 <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-                    <input type="text" id="new-attr-name" placeholder="新增能力 (如: 桌遊設計)" style="margin:0;">
+                    <input type="text" id="new-attr-name" placeholder="新增能力 (如: 閱讀)" style="margin:0;">
                     <button class="btn-primary" onclick="addCustomAttribute()" style="width: 30%; margin:0;">新增</button>
                 </div>
                 <div id="attributes-list"></div>
             </div>
         </section>
 
-        <!-- 3. 冒險日誌 (歷史紀錄) -->
+        <!-- 3. 冒險日誌 -->
         <section id="tab-log" class="tab-content">
             <div class="card">
                 <div class="card-title">📅 選擇查看日期</div>
@@ -392,37 +412,75 @@
             </div>
         </section>
 
-        <!-- 4. 體重追蹤 -->
+        <!-- 4. 體重與飲食追蹤 -->
         <section id="tab-weight" class="tab-content">
             <div class="card">
-                <div class="card-title">⚖️ 記錄今天體重</div>
-                <div style="display: flex; gap: 8px;">
-                    <input type="number" id="weight-input" step="0.1" placeholder="體重 (kg)" style="margin:0;">
-                    <button class="btn-primary" onclick="addWeightRecord()" style="width: 30%; margin:0;">記錄</button>
-                </div>
+                <div class="card-title">⚖️ 記錄體重與每日飲食</div>
+                <input type="number" id="weight-input" step="0.1" placeholder="今日體重 (kg)">
+                <textarea id="diet-input" rows="2" placeholder="今日飲食備忘 (例: 早餐: 麥片 / 午餐: 雞肉沙拉)"></textarea>
+                <button class="btn-primary" onclick="addWeightRecord()">記錄健康數據</button>
             </div>
+
             <div class="card">
-                <div class="card-title">📈 體重變化趨勢</div>
+                <div class="card-title">
+                    <span>📈 月份健康走勢</span>
+                </div>
+                <div class="month-selector">
+                    <label>查看月份：</label>
+                    <input type="month" id="weight-month-picker" onchange="renderWeightTab()">
+                </div>
                 <div class="chart-container">
                     <canvas id="weightChart"></canvas>
                 </div>
             </div>
+
+            <div class="card">
+                <div class="card-title">🥗 當月飲食與體重明細</div>
+                <div id="weight-history-list"></div>
+            </div>
         </section>
 
-        <!-- 5. 財務管理 -->
+        <!-- 5. 閱讀筆記 -->
+        <section id="tab-reading" class="tab-content">
+            <div class="card">
+                <div class="card-title">📚 登記閱讀書籍</div>
+                <input type="text" id="book-title" placeholder="書名 (例: 原子習慣)">
+                <div style="display: flex; gap: 8px;">
+                    <input type="number" id="book-rating" min="1" max="10" placeholder="評分 (1-10分)" style="width: 40%;">
+                    <input type="date" id="book-date" style="width: 60%;">
+                </div>
+                <textarea id="book-note" rows="2" placeholder="簡短閱讀心得..."></textarea>
+                <button class="btn-primary" onclick="addBookRecord()">新增書籍紀錄</button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">📖 月份閱讀書單</div>
+                <div class="month-selector">
+                    <label>查看月份：</label>
+                    <input type="month" id="reading-month-picker" onchange="renderReadingTab()">
+                </div>
+                <div id="reading-list"></div>
+            </div>
+        </section>
+
+        <!-- 6. 財務管理 -->
         <section id="tab-finance" class="tab-content">
             <div class="card">
+                <div class="month-selector">
+                    <label>查看月份：</label>
+                    <input type="month" id="finance-month-picker" onchange="renderFinanceTab()">
+                </div>
                 <div class="finance-summary">
                     <div class="finance-box">
-                        <div style="font-size:12px; color:var(--text-sub);">淨資產</div>
+                        <div style="font-size:11px; color:var(--text-sub);">當月結餘</div>
                         <div class="num" id="net-asset" style="color:var(--accent-gold);">$0</div>
                     </div>
                     <div class="finance-box">
-                        <div style="font-size:12px; color:var(--text-sub);">總收入</div>
+                        <div style="font-size:11px; color:var(--text-sub);">當月收入</div>
                         <div class="num" id="total-income" style="color:var(--accent-green);">$0</div>
                     </div>
                     <div class="finance-box">
-                        <div style="font-size:12px; color:var(--text-sub);">總支出</div>
+                        <div style="font-size:11px; color:var(--text-sub);">當月支出</div>
                         <div class="num" id="total-expense" style="color:var(--accent-red);">$0</div>
                     </div>
                 </div>
@@ -433,21 +491,26 @@
                         <option value="expense">支出 🔴</option>
                         <option value="income">收入 🟢</option>
                     </select>
-                    <input type="text" id="fin-cat" placeholder="類別 (如: 餐飲, 薪水)" style="width:40%;">
+                    <input type="text" id="fin-cat" placeholder="類別 (如: 餐飲)" style="width:40%;">
                     <input type="number" id="fin-amount" placeholder="金額" style="width:30%;">
                 </div>
                 <button class="btn-primary" onclick="addFinanceRecord()">新增紀錄</button>
             </div>
 
             <div class="card">
-                <div class="card-title">📊 支出類別占比</div>
+                <div class="card-title">📊 當月支出類別占比</div>
                 <div class="chart-container">
                     <canvas id="financeChart"></canvas>
                 </div>
             </div>
+
+            <div class="card">
+                <div class="card-title">📋 當月收支明細表</div>
+                <div id="finance-history-list"></div>
+            </div>
         </section>
 
-        <!-- 6. 系統設定頁面 -->
+        <!-- 7. 系統設定頁面 -->
         <section id="tab-settings" class="tab-content">
             <div class="card">
                 <div class="card-title">👤 個人設定</div>
@@ -478,6 +541,9 @@
         <button class="nav-item" onclick="switchTab('weight', this)">
             <span class="nav-icon">⚖️</span>體重
         </button>
+        <button class="nav-item" onclick="switchTab('reading', this)">
+            <span class="nav-icon">📚</span>閱讀
+        </button>
         <button class="nav-item" onclick="switchTab('finance', this)">
             <span class="nav-icon">💰</span>財務
         </button>
@@ -487,36 +553,45 @@
     </nav>
 
     <script>
+        // 預設資料：屬性初始值為 0，空白任務清單
         const defaultData = {
             name: "冒險者",
             level: 1,
             exp: 0,
             gold: 0,
             attributes: {
-                "體力健康": 10,
-                "智力知識": 10,
-                "音樂": 5,
-                "桌遊知識": 5,
-                "桌遊設計": 5,
-                "桌遊課程設計": 5,
-                "語文能力": 5
+                "體力健康": 0,
+                "智力知識": 0,
+                "音樂": 0,
+                "桌遊知識": 0,
+                "桌遊設計": 0,
+                "桌遊課程設計": 0,
+                "語文能力": 0,
+                "閱讀": 0
             },
-            quests: [
-                { id: 1, title: "完成 30 分鐘運動", attr: "體力健康", exp: 30, gold: 15 },
-                { id: 2, title: "發想 1 個桌遊新機制", attr: "桌遊設計", exp: 25, gold: 20 }
-            ],
+            quests: [],
             history: {},
             weightLogs: [],
+            readingLogs: [],
             financeLogs: []
         };
 
         let gameData = JSON.parse(localStorage.getItem('lifeGamifyData')) || JSON.parse(JSON.stringify(defaultData));
 
+        let editingQuestId = null;
         let weightChartInstance = null;
         let financeChartInstance = null;
 
+        const currentMonthStr = new Date().toISOString().slice(0, 7);
+
         window.onload = function() {
             document.getElementById('log-date-picker').value = new Date().toISOString().split('T')[0];
+            document.getElementById('book-date').value = new Date().toISOString().split('T')[0];
+            
+            document.getElementById('weight-month-picker').value = currentMonthStr;
+            document.getElementById('reading-month-picker').value = currentMonthStr;
+            document.getElementById('finance-month-picker').value = currentMonthStr;
+
             updateUI();
             initCharts();
         };
@@ -532,8 +607,9 @@
             document.getElementById(`tab-${tabId}`).classList.add('active');
             btn.classList.add('active');
 
-            if (tabId === 'weight') renderWeightChart();
-            if (tabId === 'finance') renderFinanceChart();
+            if (tabId === 'weight') renderWeightTab();
+            if (tabId === 'reading') renderReadingTab();
+            if (tabId === 'finance') renderFinanceTab();
             if (tabId === 'log') loadHistoryLog();
             if (tabId === 'settings') {
                 document.getElementById('setting-name-input').value = gameData.name || "冒險者";
@@ -573,24 +649,32 @@
 
             const questList = document.getElementById('quest-list');
             questList.innerHTML = '';
-            gameData.quests.forEach(q => {
-                questList.innerHTML += `
-                    <div class="quest-item">
-                        <div class="quest-info">
-                            <h4>${q.title}</h4>
-                            <div class="quest-tags">
-                                <span class="tag">${q.attr}</span>
-                                <span class="tag">+${q.exp} EXP</span>
-                                <span class="tag">🪙 +${q.gold}</span>
+            if (gameData.quests.length === 0) {
+                questList.innerHTML = '<p style="color:var(--text-sub); font-size:13px;">目前沒有任務，請在上方新增！</p>';
+            } else {
+                gameData.quests.forEach(q => {
+                    questList.innerHTML += `
+                        <div class="quest-item">
+                            <div class="quest-info">
+                                <h4>${q.title}</h4>
+                                <div class="quest-tags">
+                                    <span class="tag">${q.attr}</span>
+                                    <span class="tag">+${q.exp} EXP</span>
+                                    <span class="tag">🪙 +${q.gold}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <button class="btn-complete" onclick="completeQuest(${q.id})">完成</button>
+                                <button class="btn-small btn-edit" onclick="editQuest(${q.id})">✏️</button>
+                                <button class="btn-small btn-delete" onclick="deleteQuest(${q.id})">🗑️</button>
                             </div>
                         </div>
-                        <button class="btn-complete" onclick="completeQuest(${q.id})">完成</button>
-                    </div>
-                `;
-            });
+                    `;
+                });
+            }
         }
 
-        function addQuest() {
+        function addOrUpdateQuest() {
             const title = document.getElementById('quest-title').value.trim();
             const attr = document.getElementById('quest-attr').value;
             const exp = parseInt(document.getElementById('quest-exp').value) || 20;
@@ -598,10 +682,46 @@
 
             if (!title) return alert('請輸入任務名稱！');
 
-            gameData.quests.push({ id: Date.now(), title, attr, exp, gold });
+            if (editingQuestId !== null) {
+                const q = gameData.quests.find(item => item.id === editingQuestId);
+                if (q) {
+                    q.title = title;
+                    q.attr = attr;
+                    q.exp = exp;
+                    q.gold = gold;
+                }
+                editingQuestId = null;
+                document.getElementById('quest-form-title').innerText = '➕ 發布新任務';
+                document.getElementById('btn-save-quest').innerText = '新增任務';
+            } else {
+                gameData.quests.push({ id: Date.now(), title, attr, exp, gold });
+            }
+
             document.getElementById('quest-title').value = '';
             saveData();
             updateUI();
+        }
+
+        function editQuest(id) {
+            const q = gameData.quests.find(item => item.id === id);
+            if (!q) return;
+
+            document.getElementById('quest-title').value = q.title;
+            document.getElementById('quest-attr').value = q.attr;
+            document.getElementById('quest-exp').value = q.exp;
+            document.getElementById('quest-gold').value = q.gold;
+
+            editingQuestId = id;
+            document.getElementById('quest-form-title').innerText = '✏️ 編輯任務';
+            document.getElementById('btn-save-quest').innerText = '更新任務';
+        }
+
+        function deleteQuest(id) {
+            if (confirm('確定要刪除這個任務嗎？')) {
+                gameData.quests = gameData.quests.filter(q => q.id !== id);
+                saveData();
+                updateUI();
+            }
         }
 
         function completeQuest(id) {
@@ -641,9 +761,9 @@
         function addCustomAttribute() {
             const name = document.getElementById('new-attr-name').value.trim();
             if (!name) return alert('請輸入能力名稱！');
-            if (gameData.attributes[name]) return alert('該能力已經存在！');
+            if (gameData.attributes[name] !== undefined) return alert('該能力已經存在！');
 
-            gameData.attributes[name] = 5;
+            gameData.attributes[name] = 0;
             document.getElementById('new-attr-name').value = '';
             saveData();
             updateUI();
@@ -653,7 +773,6 @@
             const selectedDate = document.getElementById('log-date-picker').value;
             const logContainer = document.getElementById('history-task-list');
             const noteTextarea = document.getElementById('daily-note');
-
             const dayData = gameData.history[selectedDate] || { tasks: [], note: "" };
 
             logContainer.innerHTML = '';
@@ -675,32 +794,134 @@
         function saveDailyNote() {
             const selectedDate = document.getElementById('log-date-picker').value;
             const note = document.getElementById('daily-note').value;
-
             if (!gameData.history[selectedDate]) {
                 gameData.history[selectedDate] = { tasks: [], note: "" };
             }
             gameData.history[selectedDate].note = note;
-
             saveData();
             alert('📝 日誌心得已成功儲存！');
         }
 
         function addWeightRecord() {
             const weight = parseFloat(document.getElementById('weight-input').value);
+            const diet = document.getElementById('diet-input').value.trim();
             if (!weight) return alert('請輸入有效體重！');
 
             const today = new Date().toISOString().split('T')[0];
             const existingIndex = gameData.weightLogs.findIndex(w => w.date === today);
+
             if (existingIndex >= 0) {
                 gameData.weightLogs[existingIndex].weight = weight;
+                gameData.weightLogs[existingIndex].diet = diet;
             } else {
-                gameData.weightLogs.push({ date: today, weight });
+                gameData.weightLogs.push({ id: Date.now(), date: today, weight, diet });
             }
 
             gameData.weightLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
             document.getElementById('weight-input').value = '';
+            document.getElementById('diet-input').value = '';
+
             saveData();
-            renderWeightChart();
+            renderWeightTab();
+        }
+
+        function deleteWeightRecord(id) {
+            if (confirm('確定要刪除這筆體重紀錄嗎？')) {
+                gameData.weightLogs = gameData.weightLogs.filter(w => w.id !== id);
+                saveData();
+                renderWeightTab();
+            }
+        }
+
+        function renderWeightTab() {
+            const selectedMonth = document.getElementById('weight-month-picker').value;
+            const filteredLogs = gameData.weightLogs.filter(w => w.date.startsWith(selectedMonth));
+
+            if (weightChartInstance) {
+                weightChartInstance.data.labels = filteredLogs.map(item => item.date.slice(8) + '日');
+                weightChartInstance.data.datasets[0].data = filteredLogs.map(item => item.weight);
+                weightChartInstance.update();
+            }
+
+            const listEl = document.getElementById('weight-history-list');
+            listEl.innerHTML = '';
+            if (filteredLogs.length === 0) {
+                listEl.innerHTML = '<p style="color:var(--text-sub); font-size:13px;">當月無紀錄。</p>';
+            } else {
+                filteredLogs.forEach(item => {
+                    listEl.innerHTML += `
+                        <div class="history-list-item">
+                            <div>
+                                <strong>${item.date}</strong>: ${item.weight} kg
+                                ${item.diet ? `<div style="font-size:12px; color:var(--text-sub); margin-top:2px;">🥗 ${item.diet}</div>` : ''}
+                            </div>
+                            <button class="btn-small btn-delete" onclick="deleteWeightRecord(${item.id})">🗑️</button>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        function addBookRecord() {
+            const title = document.getElementById('book-title').value.trim();
+            const rating = parseInt(document.getElementById('book-rating').value);
+            const date = document.getElementById('book-date').value;
+            const note = document.getElementById('book-note').value.trim();
+
+            if (!title) return alert('請輸入書名！');
+            if (!rating || rating < 1 || rating > 10) return alert('請輸入 1-10 分的評分！');
+
+            gameData.readingLogs.push({ id: Date.now(), date, title, rating, note });
+            
+            if (gameData.attributes['閱讀'] !== undefined) {
+                gameData.attributes['閱讀'] += 1;
+            }
+            gameData.exp += 15;
+
+            document.getElementById('book-title').value = '';
+            document.getElementById('book-rating').value = '';
+            document.getElementById('book-note').value = '';
+
+            saveData();
+            updateUI();
+            renderReadingTab();
+        }
+
+        function deleteBookRecord(id) {
+            if (confirm('確定要刪除這筆閱讀紀錄嗎？')) {
+                gameData.readingLogs = gameData.readingLogs.filter(b => b.id !== id);
+                saveData();
+                renderReadingTab();
+            }
+        }
+
+        function renderReadingTab() {
+            const selectedMonth = document.getElementById('reading-month-picker').value;
+            const filteredLogs = gameData.readingLogs.filter(b => b.date.startsWith(selectedMonth));
+
+            const listEl = document.getElementById('reading-list');
+            listEl.innerHTML = '';
+
+            if (filteredLogs.length === 0) {
+                listEl.innerHTML = '<p style="color:var(--text-sub); font-size:13px;">當月尚無閱讀紀錄。</p>';
+            } else {
+                filteredLogs.forEach(b => {
+                    listEl.innerHTML += `
+                        <div class="history-list-item" style="flex-direction: column; align-items: flex-start;">
+                            <div style="display:flex; justify-content:space-between; width:100%;">
+                                <strong>📖 ${b.title}</strong>
+                                <div>
+                                    <span style="color:var(--accent-gold); font-weight:bold;">★ ${b.rating}/10</span>
+                                    <button class="btn-small btn-delete" onclick="deleteBookRecord(${b.id})">🗑️</button>
+                                </div>
+                            </div>
+                            <div style="font-size:12px; color:var(--text-sub); margin-top:4px;">
+                                日期: ${b.date} ${b.note ? `| 心得: ${b.note}` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
         }
 
         function addFinanceRecord() {
@@ -711,18 +932,74 @@
             if (!amount) return alert('請輸入有效金額！');
 
             const today = new Date().toISOString().split('T')[0];
-            gameData.financeLogs.push({ date: today, type, cat, amount });
+            gameData.financeLogs.push({ id: Date.now(), date: today, type, cat, amount });
 
             document.getElementById('fin-cat').value = '';
             document.getElementById('fin-amount').value = '';
             saveData();
-            renderFinanceChart();
+            renderFinanceTab();
+        }
+
+        function deleteFinanceRecord(id) {
+            if (confirm('確定要刪除這筆財務明細嗎？')) {
+                gameData.financeLogs = gameData.financeLogs.filter(f => f.id !== id);
+                saveData();
+                renderFinanceTab();
+            }
+        }
+
+        function renderFinanceTab() {
+            const selectedMonth = document.getElementById('finance-month-picker').value;
+            const filteredLogs = gameData.financeLogs.filter(f => f.date.startsWith(selectedMonth));
+
+            let totalIncome = 0;
+            let totalExpense = 0;
+            const expenseByCat = {};
+
+            filteredLogs.forEach(item => {
+                if (item.type === 'income') {
+                    totalIncome += item.amount;
+                } else {
+                    totalExpense += item.amount;
+                    expenseByCat[item.cat] = (expenseByCat[item.cat] || 0) + item.amount;
+                }
+            });
+
+            document.getElementById('net-asset').innerText = `$${totalIncome - totalExpense}`;
+            document.getElementById('total-income').innerText = `$${totalIncome}`;
+            document.getElementById('total-expense').innerText = `$${totalExpense}`;
+
+            if (financeChartInstance) {
+                financeChartInstance.data.labels = Object.keys(expenseByCat);
+                financeChartInstance.data.datasets[0].data = Object.values(expenseByCat);
+                financeChartInstance.update();
+            }
+
+            const listEl = document.getElementById('finance-history-list');
+            listEl.innerHTML = '';
+            if (filteredLogs.length === 0) {
+                listEl.innerHTML = '<p style="color:var(--text-sub); font-size:13px;">當月無收支紀錄。</p>';
+            } else {
+                filteredLogs.forEach(f => {
+                    const isInc = f.type === 'income';
+                    listEl.innerHTML += `
+                        <div class="history-list-item">
+                            <div>
+                                <span>${f.date} [${f.cat}]</span>
+                                <span style="font-weight:bold; color:${isInc ? 'var(--accent-green)' : 'var(--accent-red)'}; margin-left:8px;">
+                                    ${isInc ? '+' : '-'}$${f.amount}
+                                </span>
+                            </div>
+                            <button class="btn-small btn-delete" onclick="deleteFinanceRecord(${f.id})">🗑️</button>
+                        </div>
+                    `;
+                });
+            }
         }
 
         function updateName() {
             const newName = document.getElementById('setting-name-input').value.trim();
             if (!newName) return alert('請輸入有效的名稱！');
-
             gameData.name = newName;
             saveData();
             updateUI();
@@ -730,12 +1007,13 @@
         }
 
         function resetAllData() {
-            if (confirm('⚠️ 確定要重置所有資料嗎？這將會清空等級、任務、體重與財務紀錄！')) {
+            if (confirm('⚠️ 確定要重置所有資料嗎？這將會清空等級、任務、體重、閱讀與財務紀錄！')) {
                 gameData = JSON.parse(JSON.stringify(defaultData));
                 saveData();
                 updateUI();
-                renderWeightChart();
-                renderFinanceChart();
+                renderWeightTab();
+                renderReadingTab();
+                renderFinanceTab();
                 alert('🔄 資料已完全重置！');
             }
         }
@@ -754,38 +1032,6 @@
                 data: { labels: [], datasets: [{ data: [], backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#10b981', '#8b5cf6'] }] },
                 options: { responsive: true, maintainAspectRatio: false }
             });
-        }
-
-        function renderWeightChart() {
-            if (!weightChartInstance) return;
-            weightChartInstance.data.labels = gameData.weightLogs.map(item => item.date.slice(5));
-            weightChartInstance.data.datasets[0].data = gameData.weightLogs.map(item => item.weight);
-            weightChartInstance.update();
-        }
-
-        function renderFinanceChart() {
-            if (!financeChartInstance) return;
-
-            let totalIncome = 0;
-            let totalExpense = 0;
-            const expenseByCat = {};
-
-            gameData.financeLogs.forEach(item => {
-                if (item.type === 'income') {
-                    totalIncome += item.amount;
-                } else {
-                    totalExpense += item.amount;
-                    expenseByCat[item.cat] = (expenseByCat[item.cat] || 0) + item.amount;
-                }
-            });
-
-            document.getElementById('net-asset').innerText = `$${totalIncome - totalExpense}`;
-            document.getElementById('total-income').innerText = `$${totalIncome}`;
-            document.getElementById('total-expense').innerText = `$${totalExpense}`;
-
-            financeChartInstance.data.labels = Object.keys(expenseByCat);
-            financeChartInstance.data.datasets[0].data = Object.values(expenseByCat);
-            financeChartInstance.update();
         }
     </script>
 </body>
