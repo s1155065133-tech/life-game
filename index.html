@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>人生遊戲化 Gamified Life</title>
+
+    <!-- 📱 設定 iPhone 主畫面 App 專屬圖示 -->
+    <link rel="apple-touch-icon" href="https://img.icons8.com/isometric/512/crossed-swords.png">
+
     <!-- Chart.js 圖表庫 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
@@ -38,7 +42,7 @@
             min-height: 100vh;
         }
 
-        /* 頂部玩家資訊欄 */
+        /* 頂部英雄面板 */
         header {
             background: linear-gradient(135deg, #1e1b4b, #312e81);
             padding: 20px;
@@ -482,7 +486,6 @@
     </nav>
 
     <script>
-        // 預設資料模組
         const defaultData = {
             name: "冒險者",
             level: 1,
@@ -506,7 +509,6 @@
             financeLogs: []
         };
 
-        // 載入資料
         let gameData = JSON.parse(localStorage.getItem('lifeGamifyData')) || JSON.parse(JSON.stringify(defaultData));
 
         let weightChartInstance = null;
@@ -522,7 +524,6 @@
             localStorage.setItem('lifeGamifyData', JSON.stringify(gameData));
         }
 
-        // 切換頁籤
         function switchTab(tabId, btn) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -538,7 +539,6 @@
             }
         }
 
-        // 更新 UI
         function updateUI() {
             const maxExp = gameData.level * 100;
             document.getElementById('player-name').innerText = gameData.name || "冒險者";
@@ -547,14 +547,12 @@
             document.getElementById('exp-text').innerText = `${gameData.exp} / ${maxExp}`;
             document.getElementById('exp-bar').style.width = `${(gameData.exp / maxExp) * 100}%`;
 
-            // 更新屬性下拉選單
             const attrSelect = document.getElementById('quest-attr');
             attrSelect.innerHTML = '';
             for (let attr in gameData.attributes) {
                 attrSelect.innerHTML += `<option value="${attr}">${attr}</option>`;
             }
 
-            // 更新屬性清單
             const attrList = document.getElementById('attributes-list');
             attrList.innerHTML = '';
             for (let attr in gameData.attributes) {
@@ -572,7 +570,6 @@
                 `;
             }
 
-            // 更新任務清單
             const questList = document.getElementById('quest-list');
             questList.innerHTML = '';
             gameData.quests.forEach(q => {
@@ -592,7 +589,6 @@
             });
         }
 
-        // 任務相關
         function addQuest() {
             const title = document.getElementById('quest-title').value.trim();
             const attr = document.getElementById('quest-attr').value;
@@ -641,7 +637,6 @@
             updateUI();
         }
 
-        // 新增自訂屬性
         function addCustomAttribute() {
             const name = document.getElementById('new-attr-name').value.trim();
             if (!name) return alert('請輸入能力名稱！');
@@ -653,7 +648,6 @@
             updateUI();
         }
 
-        // 日誌紀錄
         function loadHistoryLog() {
             const selectedDate = document.getElementById('log-date-picker').value;
             const logContainer = document.getElementById('history-task-list');
@@ -690,7 +684,6 @@
             alert('📝 日誌心得已成功儲存！');
         }
 
-        // 體重追蹤
         function addWeightRecord() {
             const weight = parseFloat(document.getElementById('weight-input').value);
             if (!weight) return alert('請輸入有效體重！');
@@ -709,7 +702,6 @@
             renderWeightChart();
         }
 
-        // 財務管理
         function addFinanceRecord() {
             const type = document.getElementById('fin-type').value;
             const cat = document.getElementById('fin-cat').value.trim() || '未分類';
@@ -726,7 +718,6 @@
             renderFinanceChart();
         }
 
-        // 設定：修改名字
         function updateName() {
             const newName = document.getElementById('setting-name-input').value.trim();
             if (!newName) return alert('請輸入有效的名稱！');
@@ -737,7 +728,6 @@
             alert('👤 稱號修改成功！');
         }
 
-        // 設定：重置資料
         function resetAllData() {
             if (confirm('⚠️ 確定要重置所有資料嗎？這將會清空等級、任務、體重與財務紀錄！')) {
                 gameData = JSON.parse(JSON.stringify(defaultData));
@@ -749,7 +739,6 @@
             }
         }
 
-        // 圖表初始化與繪製
         function initCharts() {
             const ctxW = document.getElementById('weightChart').getContext('2d');
             weightChartInstance = new Chart(ctxW, {
