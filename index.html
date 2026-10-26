@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>人生遊戲化 Gamified Life</title>
+    <!-- Chart.js 圖表庫 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --card-border: #334155;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --accent-gold: #f59e0b;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+            --accent-blue: #3b82f6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding-bottom: 70px;
+            max-width: 600px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+
+        /* 頂部玩家資訊欄 */
+        header {
+            background: linear-gradient(135deg, #1e1b4b, #312e81);
+            padding: 20px;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            margin-bottom: 15px;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, var(--accent-gold), var(--primary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+        }
+
+        .user-info h2 {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        .level-badge {
+            background: var(--accent-gold);
+            color: #000;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+
+        .stats-bar {
+            margin-top: 10px;
+        }
+
+        .bar-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-bottom: 4px;
+        }
+
+        .progress-bg {
+            background: rgba(255, 255, 255, 0.1);
+            height: 10px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .currencies {
+            display: flex;
+            gap: 15px;
+            margin-top: 12px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .currency-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 4px 10px;
+            border-radius: 10px;
+        }
+
+        /* 導覽列 */
+        nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            max-width: 600px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            border-top: 1px solid var(--card-border);
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-sub);
+            font-size: 11px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            width: 16%;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .nav-icon {
+            font-size: 18px;
+            margin-bottom: 2px;
+        }
+
+        /* 主要內容區 */
+        main {
+            padding: 0 15px;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* 按鈕與輸入框 */
+        input, select, textarea, button {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+            background: #0f172a;
+            color: var(--text-main);
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        button.btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button.btn-danger {
+            background: var(--accent-red);
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* 任務列表 */
+        .quest-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .quest-info h4 {
+            font-size: 15px;
+            margin-bottom: 4px;
+        }
+
+        .quest-tags {
+            display: flex;
+            gap: 5px;
+            font-size: 11px;
+        }
+
+        .tag {
+            background: var(--card-border);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--text-sub);
+        }
+
+        .btn-complete {
+            background: var(--accent-green);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            width: auto;
+            margin: 0;
+        }
+
+        /* 屬性清單 */
+        .attr-item {
+            margin-bottom: 12px;
+        }
+
+        .attr-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        /* 歷史與圖表 */
+        .chart-container {
+            position: relative;
+            height: 220px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .history-list-item {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--card-border);
+            font-size: 13px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .finance-summary {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .finance-box {
+            background: #0f172a;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .finance-box .num {
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 頂部英雄面板 -->
+    <header>
+        <div class="user-profile">
+            <div class="avatar">⚔️</div>
+            <div class="user-info">
+                <h2><span id="player-name">冒險者</span> <span class="level-badge" id="player-level">LV.1</span></h2>
+                <div class="currencies">
+                    <div class="currency-item">🪙 <span id="player-gold">0</span> 金幣</div>
+                </div>
+            </div>
+        </div>
+        <div class="stats-bar">
+            <div class="bar-label">
+                <span>經驗值 EXP</span>
+                <span id="exp-text">0 / 100</span>
+            </div>
+            <div class="progress-bg">
+                <div class="progress-fill" id="exp-bar"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 主頁面內容區 -->
+    <main>
+        <!-- 1. 任務與冒險頁面 -->
+        <section id="tab-quests" class="tab-content active">
+            <div class="card">
+                <div class="card-title">➕ 發布新任務</div>
+                <input type="text" id="quest-title" placeholder="任務名稱 (例: 練習桌遊設計30分鐘)">
+                <div style="display: flex; gap: 8px;">
+                    <select id="quest-attr"></select>
+                    <input type="number" id="quest-exp" placeholder="EXP (預設20)" value="20">
+                    <input type="number" id="quest-gold" placeholder="金幣 (預設10)" value="10">
+                </div>
+                <button class="btn-primary" onclick="addQuest()">新增任務</button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">📜 每日任務清單</div>
+                <div id="quest-list"></div>
+            </div>
+        </section>
+
+        <!-- 2. 個人屬性與能力矩陣 -->
+        <section id="tab-stats" class="tab-content">
+            <div class="card">
+                <div class="card-title">
+                    ✨ 自訂能力矩陣
+                </div>
+                <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                    <input type="text" id="new-attr-name" placeholder="新增能力 (如: 桌遊設計)" style="margin:0;">
+                    <button class="btn-primary" onclick="addCustomAttribute()" style="width: 30%; margin:0;">新增</button>
+                </div>
+                <div id="attributes-list"></div>
+            </div>
+        </section>
+
+        <!-- 3. 冒險日誌 (歷史紀錄) -->
+        <section id="tab-log" class="tab-content">
+            <div class="card">
+                <div class="card-title">📅 選擇查看日期</div>
+                <input type="date" id="log-date-picker" onchange="loadHistoryLog()">
+            </div>
+            <div class="card">
+                <div class="card-title">✅ 當日完成任務紀錄</div>
+                <div id="history-task-list"></div>
+            </div>
+            <div class="card">
+                <div class="card-title">📝 每日冒險心得 / 檢討</div>
+                <textarea id="daily-note" rows="4" placeholder="寫下今天的收穫或改進的地方..."></textarea>
+                <button class="btn-primary" onclick="saveDailyNote()">儲存心得</button>
+            </div>
+        </section>
+
+        <!-- 4. 體重追蹤 -->
+        <section id="tab-weight" class="tab-content">
+            <div class="card">
+                <div class="card-title">⚖️ 記錄今天體重</div>
+                <div style="display: flex; gap: 8px;">
+                    <input type="number" id="weight-input" step="0.1" placeholder="體重 (kg)" style="margin:0;">
+                    <button class="btn-primary" onclick="addWeightRecord()" style="width: 30%; margin:0;">記錄</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">📈 體重變化趨勢</div>
+                <div class="chart-container">
+                    <canvas id="weightChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. 財務管理 -->
+        <section id="tab-finance" class="tab-content">
+            <div class="card">
+                <div class="finance-summary">
+                    <div class="finance-box">
+                        <div style="font-size:12px; color:var(--text-sub);">淨資產</div>
+                        <div class="num" id="net-asset" style="color:var(--accent-gold);">$0</div>
+                    </div>
+                    <div class="finance-box">
+                        <div style="font-size:12px; color:var(--text-sub);">總收入</div>
+                        <div class="num" id="total-income" style="color:var(--accent-green);">$0</div>
+                    </div>
+                    <div class="finance-box">
+                        <div style="font-size:12px; color:var(--text-sub);">總支出</div>
+                        <div class="num" id="total-expense" style="color:var(--accent-red);">$0</div>
+                    </div>
+                </div>
+
+                <div class="card-title">💰 新增收支明細</div>
+                <div style="display: flex; gap: 8px;">
+                    <select id="fin-type" style="width:30%;">
+                        <option value="expense">支出 🔴</option>
+                        <option value="income">收入 🟢</option>
+                    </select>
+                    <input type="text" id="fin-cat" placeholder="類別 (如: 餐飲, 薪水)" style="width:40%;">
+                    <input type="number" id="fin-amount" placeholder="金額" style="width:30%;">
+                </div>
+                <button class="btn-primary" onclick="addFinanceRecord()">新增紀錄</button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">📊 支出類別占比</div>
+                <div class="chart-container">
+                    <canvas id="financeChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. 系統設定頁面 -->
+        <section id="tab-settings" class="tab-content">
+            <div class="card">
+                <div class="card-title">👤 個人設定</div>
+                <label style="font-size:12px; color:var(--text-sub); display:block; margin-bottom:4px;">修改冒險者名稱：</label>
+                <input type="text" id="setting-name-input" placeholder="輸入你的稱號或名字">
+                <button class="btn-primary" onclick="updateName()">儲存名字</button>
+            </div>
+
+            <div class="card" style="border-color: rgba(239, 68, 68, 0.4);">
+                <div class="card-title" style="color: var(--accent-red);">⚠️ 重置資料</div>
+                <p style="font-size: 12px; color: var(--text-sub); margin-bottom: 12px;">重置後將清空所有等級、經驗值、任務紀錄、體重與財務數據，且無法復原。</p>
+                <button class="btn-danger" onclick="resetAllData()">清空並重置所有資料</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- 底部導覽列 -->
+    <nav>
+        <button class="nav-item active" onclick="switchTab('quests', this)">
+            <span class="nav-icon">⚔️</span>冒險
+        </button>
+        <button class="nav-item" onclick="switchTab('stats', this)">
+            <span class="nav-icon">📊</span>屬性
+        </button>
+        <button class="nav-item" onclick="switchTab('log', this)">
+            <span class="nav-icon">📖</span>日誌
+        </button>
+        <button class="nav-item" onclick="switchTab('weight', this)">
+            <span class="nav-icon">⚖️</span>體重
+        </button>
+        <button class="nav-item" onclick="switchTab('finance', this)">
+            <span class="nav-icon">💰</span>財務
+        </button>
+        <button class="nav-item" onclick="switchTab('settings', this)">
+            <span class="nav-icon">⚙️</span>設定
+        </button>
+    </nav>
+
+    <script>
+        // 預設資料模組
+        const defaultData = {
+            name: "冒險者",
+            level: 1,
+            exp: 0,
+            gold: 0,
+            attributes: {
+                "體力健康": 10,
+                "智力知識": 10,
+                "音樂": 5,
+                "桌遊知識": 5,
+                "桌遊設計": 5,
+                "桌遊課程設計": 5,
+                "語文能力": 5
+            },
+            quests: [
+                { id: 1, title: "完成 30 分鐘運動", attr: "體力健康", exp: 30, gold: 15 },
+                { id: 2, title: "發想 1 個桌遊新機制", attr: "桌遊設計", exp: 25, gold: 20 }
+            ],
+            history: {},
+            weightLogs: [],
+            financeLogs: []
+        };
+
+        // 載入資料
+        let gameData = JSON.parse(localStorage.getItem('lifeGamifyData')) || JSON.parse(JSON.stringify(defaultData));
+
+        let weightChartInstance = null;
+        let financeChartInstance = null;
+
+        window.onload = function() {
+            document.getElementById('log-date-picker').value = new Date().toISOString().split('T')[0];
+            updateUI();
+            initCharts();
+        };
+
+        function saveData() {
+            localStorage.setItem('lifeGamifyData', JSON.stringify(gameData));
+        }
+
+        // 切換頁籤
+        function switchTab(tabId, btn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+            btn.classList.add('active');
+
+            if (tabId === 'weight') renderWeightChart();
+            if (tabId === 'finance') renderFinanceChart();
+            if (tabId === 'log') loadHistoryLog();
+            if (tabId === 'settings') {
+                document.getElementById('setting-name-input').value = gameData.name || "冒險者";
+            }
+        }
+
+        // 更新 UI
+        function updateUI() {
+            const maxExp = gameData.level * 100;
+            document.getElementById('player-name').innerText = gameData.name || "冒險者";
+            document.getElementById('player-level').innerText = `LV.${gameData.level}`;
+            document.getElementById('player-gold').innerText = gameData.gold;
+            document.getElementById('exp-text').innerText = `${gameData.exp} / ${maxExp}`;
+            document.getElementById('exp-bar').style.width = `${(gameData.exp / maxExp) * 100}%`;
+
+            // 更新屬性下拉選單
+            const attrSelect = document.getElementById('quest-attr');
+            attrSelect.innerHTML = '';
+            for (let attr in gameData.attributes) {
+                attrSelect.innerHTML += `<option value="${attr}">${attr}</option>`;
+            }
+
+            // 更新屬性清單
+            const attrList = document.getElementById('attributes-list');
+            attrList.innerHTML = '';
+            for (let attr in gameData.attributes) {
+                const val = gameData.attributes[attr];
+                attrList.innerHTML += `
+                    <div class="attr-item">
+                        <div class="attr-header">
+                            <span>${attr}</span>
+                            <span><strong>${val}</strong> PTS</span>
+                        </div>
+                        <div class="progress-bg">
+                            <div class="progress-fill" style="width: ${Math.min(val, 100)}%; background: linear-gradient(90deg, #10b981, #6366f1);"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 更新任務清單
+            const questList = document.getElementById('quest-list');
+            questList.innerHTML = '';
+            gameData.quests.forEach(q => {
+                questList.innerHTML += `
+                    <div class="quest-item">
+                        <div class="quest-info">
+                            <h4>${q.title}</h4>
+                            <div class="quest-tags">
+                                <span class="tag">${q.attr}</span>
+                                <span class="tag">+${q.exp} EXP</span>
+                                <span class="tag">🪙 +${q.gold}</span>
+                            </div>
+                        </div>
+                        <button class="btn-complete" onclick="completeQuest(${q.id})">完成</button>
+                    </div>
+                `;
+            });
+        }
+
+        // 任務相關
+        function addQuest() {
+            const title = document.getElementById('quest-title').value.trim();
+            const attr = document.getElementById('quest-attr').value;
+            const exp = parseInt(document.getElementById('quest-exp').value) || 20;
+            const gold = parseInt(document.getElementById('quest-gold').value) || 10;
+
+            if (!title) return alert('請輸入任務名稱！');
+
+            gameData.quests.push({ id: Date.now(), title, attr, exp, gold });
+            document.getElementById('quest-title').value = '';
+            saveData();
+            updateUI();
+        }
+
+        function completeQuest(id) {
+            const index = gameData.quests.findIndex(q => q.id === id);
+            if (index === -1) return;
+
+            const quest = gameData.quests[index];
+            gameData.exp += quest.exp;
+            gameData.gold += quest.gold;
+            
+            if (gameData.attributes[quest.attr] !== undefined) {
+                gameData.attributes[quest.attr] += 1;
+            }
+
+            const maxExp = gameData.level * 100;
+            if (gameData.exp >= maxExp) {
+                gameData.level += 1;
+                gameData.exp -= maxExp;
+                alert(`🎉 恭喜！你升到了 LV.${gameData.level}！`);
+            }
+
+            const today = new Date().toISOString().split('T')[0];
+            if (!gameData.history[today]) {
+                gameData.history[today] = { tasks: [], note: "" };
+            }
+            gameData.history[today].tasks.push({
+                title: quest.title,
+                attr: quest.attr,
+                completedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            });
+
+            gameData.quests.splice(index, 1);
+            saveData();
+            updateUI();
+        }
+
+        // 新增自訂屬性
+        function addCustomAttribute() {
+            const name = document.getElementById('new-attr-name').value.trim();
+            if (!name) return alert('請輸入能力名稱！');
+            if (gameData.attributes[name]) return alert('該能力已經存在！');
+
+            gameData.attributes[name] = 5;
+            document.getElementById('new-attr-name').value = '';
+            saveData();
+            updateUI();
+        }
+
+        // 日誌紀錄
+        function loadHistoryLog() {
+            const selectedDate = document.getElementById('log-date-picker').value;
+            const logContainer = document.getElementById('history-task-list');
+            const noteTextarea = document.getElementById('daily-note');
+
+            const dayData = gameData.history[selectedDate] || { tasks: [], note: "" };
+
+            logContainer.innerHTML = '';
+            if (dayData.tasks.length === 0) {
+                logContainer.innerHTML = '<p style="color:var(--text-sub); font-size:13px;">這天沒有完成任何任務。</p>';
+            } else {
+                dayData.tasks.forEach(t => {
+                    logContainer.innerHTML += `
+                        <div class="history-list-item">
+                            <span>✅ ${t.title} (${t.attr})</span>
+                            <span style="color:var(--text-sub);">${t.completedAt || ''}</span>
+                        </div>
+                    `;
+                });
+            }
+            noteTextarea.value = dayData.note || "";
+        }
+
+        function saveDailyNote() {
+            const selectedDate = document.getElementById('log-date-picker').value;
+            const note = document.getElementById('daily-note').value;
+
+            if (!gameData.history[selectedDate]) {
+                gameData.history[selectedDate] = { tasks: [], note: "" };
+            }
+            gameData.history[selectedDate].note = note;
+
+            saveData();
+            alert('📝 日誌心得已成功儲存！');
+        }
+
+        // 體重追蹤
+        function addWeightRecord() {
+            const weight = parseFloat(document.getElementById('weight-input').value);
+            if (!weight) return alert('請輸入有效體重！');
+
+            const today = new Date().toISOString().split('T')[0];
+            const existingIndex = gameData.weightLogs.findIndex(w => w.date === today);
+            if (existingIndex >= 0) {
+                gameData.weightLogs[existingIndex].weight = weight;
+            } else {
+                gameData.weightLogs.push({ date: today, weight });
+            }
+
+            gameData.weightLogs.sort((a, b) => new Date(a.date) - new Date(b.date));
+            document.getElementById('weight-input').value = '';
+            saveData();
+            renderWeightChart();
+        }
+
+        // 財務管理
+        function addFinanceRecord() {
+            const type = document.getElementById('fin-type').value;
+            const cat = document.getElementById('fin-cat').value.trim() || '未分類';
+            const amount = parseFloat(document.getElementById('fin-amount').value);
+
+            if (!amount) return alert('請輸入有效金額！');
+
+            const today = new Date().toISOString().split('T')[0];
+            gameData.financeLogs.push({ date: today, type, cat, amount });
+
+            document.getElementById('fin-cat').value = '';
+            document.getElementById('fin-amount').value = '';
+            saveData();
+            renderFinanceChart();
+        }
+
+        // 設定：修改名字
+        function updateName() {
+            const newName = document.getElementById('setting-name-input').value.trim();
+            if (!newName) return alert('請輸入有效的名稱！');
+
+            gameData.name = newName;
+            saveData();
+            updateUI();
+            alert('👤 稱號修改成功！');
+        }
+
+        // 設定：重置資料
+        function resetAllData() {
+            if (confirm('⚠️ 確定要重置所有資料嗎？這將會清空等級、任務、體重與財務紀錄！')) {
+                gameData = JSON.parse(JSON.stringify(defaultData));
+                saveData();
+                updateUI();
+                renderWeightChart();
+                renderFinanceChart();
+                alert('🔄 資料已完全重置！');
+            }
+        }
+
+        // 圖表初始化與繪製
+        function initCharts() {
+            const ctxW = document.getElementById('weightChart').getContext('2d');
+            weightChartInstance = new Chart(ctxW, {
+                type: 'line',
+                data: { labels: [], datasets: [{ label: '體重 (kg)', data: [], borderColor: '#10b981', tension: 0.3 }] },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            const ctxF = document.getElementById('financeChart').getContext('2d');
+            financeChartInstance = new Chart(ctxF, {
+                type: 'doughnut',
+                data: { labels: [], datasets: [{ data: [], backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#10b981', '#8b5cf6'] }] },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        function renderWeightChart() {
+            if (!weightChartInstance) return;
+            weightChartInstance.data.labels = gameData.weightLogs.map(item => item.date.slice(5));
+            weightChartInstance.data.datasets[0].data = gameData.weightLogs.map(item => item.weight);
+            weightChartInstance.update();
+        }
+
+        function renderFinanceChart() {
+            if (!financeChartInstance) return;
+
+            let totalIncome = 0;
+            let totalExpense = 0;
+            const expenseByCat = {};
+
+            gameData.financeLogs.forEach(item => {
+                if (item.type === 'income') {
+                    totalIncome += item.amount;
+                } else {
+                    totalExpense += item.amount;
+                    expenseByCat[item.cat] = (expenseByCat[item.cat] || 0) + item.amount;
+                }
+            });
+
+            document.getElementById('net-asset').innerText = `$${totalIncome - totalExpense}`;
+            document.getElementById('total-income').innerText = `$${totalIncome}`;
+            document.getElementById('total-expense').innerText = `$${totalExpense}`;
+
+            financeChartInstance.data.labels = Object.keys(expenseByCat);
+            financeChartInstance.data.datasets[0].data = Object.values(expenseByCat);
+            financeChartInstance.update();
+        }
+    </script>
+</body>
+</html>
